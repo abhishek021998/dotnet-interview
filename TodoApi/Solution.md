@@ -23,6 +23,10 @@ How to Run: Clear instructions for running the application and tests
 2. Navigate to the project directory in the terminal.
 3. Run the command "dotnet run" to start the application. The API will be available at "https://localhost:5001" or "http://localhost:5000".
 4. You can use tools like Postman or curl to test the API endpoints. For example, to get all todos, you can send a GET request to "https://localhost:5001/api/todos". To create a new todo, you can send a POST request to "https://localhost:5001/api/todos" with the todo data in the request body.
+5. Make Sure to pass Default connection in appsetting.json like 
+  "ConnectionStrings": {
+    "DefaultConnection": "Data Source=todos.db"
+  },
 
 
 API Documentation: How to use the endpoints
