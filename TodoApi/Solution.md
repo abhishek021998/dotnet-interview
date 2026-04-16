@@ -11,6 +11,9 @@ Architectural Decisions: What architectural patterns or principles did you apply
 
 -> We have used Clean Architecture principles to separate the concerns of the application. The Controller is responsible for handling HTTP requests and responses, while the Service is responsible for business logic and data access. This separation allows for better maintainability and testability of the code.
 -> I applied the Dependency Injection principle to decouple the Controller from the Service. Instead of creating an instance of the TodoService directly in the Controller, I used constructor injection to inject an instance of the ITodoService interface. This allows for better separation of concerns and makes it easier to test the Controller in isolation.
+Configuration Management
+Moved connection string to appsettings.json, enabling environment-based configuration.
+
 
 
 How to Run: Clear instructions for running the application and tests
@@ -33,5 +36,8 @@ API Documentation: How to use the endpoints
 
 Future Improvements: What would you do if you had more time?
 
--> If I had more time, I would implement authentication and authorization for the API to ensure that only authorized users can access and modify the todos. This could be done using JWT (JSON Web Tokens) or another authentication mechanism. I would also implement pagination for the GET /api/todos endpoint to improve performance when there are a large number of todos. Additionally, I would add more comprehensive unit tests and integration tests to ensure the reliability and stability of the application. Finally, I would consider implementing a caching mechanism to improve performance for frequently accessed data.
--> We could use LLM to generate API documentation automatically based on the code and comments in the application. This would help in keeping the documentation up-to-date and reduce the effort required to maintain it manually. We could also use LLM to generate test cases based on the API endpoints and expected behavior, which would help in improving test coverage and ensuring that the application is thoroughly tested.
+Authentication & Authorization: Implement JWT-based auth using standards like OAuth 2.0 or JWT.
+Database Migration Strategy:Replace manual table creation with migration tools (e.g., EF Core migrations).
+Pagination & Filtering:Improve performance for large datasets.
+Caching:Introduce caching (e.g., Redis) for frequently accessed data.
+Better Test Coverage ->Add:Integration tests, Edge case validations
