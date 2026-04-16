@@ -8,8 +8,11 @@ namespace TodoApi.Controllers
     [Route("api")]
     public class TodoController : ControllerBase
     {
-        public TodoController()
+        private ITodoService todoService;
+        // Inject the service via constructor injection, allowing for better testability and separation of concerns
+        public TodoController(ITodoService todoService)
         {
+            this.todoService = todoService;
         }
 
         [HttpPost("createTodo")]
@@ -17,12 +20,13 @@ namespace TodoApi.Controllers
         {
             try
             {
-                var todoService = new TodoService();
+                //    var todoService = new TodoService();  Injected via constructor, no need to create a new instance here
                 var result = todoService.CreateTodo(todo);
                 return Ok(result);
             }
             catch (Exception ex)
             {
+                Console.WriteLine("ERROR: " + ex.ToString());
                 return BadRequest(ex.Message);
             }
         }
@@ -32,7 +36,7 @@ namespace TodoApi.Controllers
         {
             try
             {
-                var todoService = new TodoService();
+                //  var todoService = new TodoService(); Injected via constructor, no need to create a new instance here
                 if (request.Id.HasValue)
                 {
                     var todo = todoService.GetTodoById(request.Id.Value);
@@ -59,7 +63,7 @@ namespace TodoApi.Controllers
         {
             try
             {
-                var todoService = new TodoService();
+                // var todoService = new TodoService(); Injected via constructor, no need to create a new instance here
                 var existingTodo = todoService.GetTodoById(request.Id);
                 if (existingTodo == null)
                 {
@@ -87,7 +91,7 @@ namespace TodoApi.Controllers
         {
             try
             {
-                var todoService = new TodoService();
+                //   var todoService = new TodoService(); Injected via constructor, no need to create a new instance here
                 var result = todoService.DeleteTodo(request.Id);
                 if (result)
                 {
@@ -101,22 +105,5 @@ namespace TodoApi.Controllers
             }
         }
     }
-
-    public class GetTodoRequest
-    {
-        public int? Id { get; set; }
-    }
-
-    public class UpdateTodoRequest
-    {
-        public int Id { get; set; }
-        public string Title { get; set; }
-        public string Description { get; set; }
-        public bool IsCompleted { get; set; }
-    }
-
-    public class DeleteTodoRequest
-    {
-        public int Id { get; set; }
-    }
+   
 }

@@ -1,24 +1,69 @@
-using Xunit;
-using TodoApi.Services;
-using TodoApi.Models;
-using TodoApi.Controllers;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Data.Sqlite;
+using Microsoft.Extensions.Configuration;
+using TodoApi.Controllers;
+using TodoApi.Models;
+using TodoApi.Services;
+using Xunit;
 
 namespace TodoApi.Tests;
 
 public class UnitTest1
 {
+    private readonly TodoService service;
+    private readonly string _connectionString = "Data Source=todo.db";
+
+    public UnitTest1()
+    {
+ 
+        var settings = new Dictionary<string, string> {
+            {"ConnectionStrings:DefaultConnection", _connectionString}
+        };
+
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(settings)
+            .Build();
+
+        InitializeDatabase(_connectionString);
+
+        service = new TodoService(configuration);
+    }
+
+    private void InitializeDatabase(string connectionString)
+    {
+        using var connection = new SqliteConnection(connectionString);
+        connection.Open();
+
+        var command = connection.CreateCommand();
+        command.CommandText = @"
+            CREATE TABLE IF NOT EXISTS Todos (
+                Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                Title TEXT NOT NULL,
+                Description TEXT,
+                IsCompleted INTEGER,
+                CreatedAt TEXT
+            );
+        ";
+        command.ExecuteNonQuery();
+    }
     [Fact]
     public void Test1()
     {
-        var service = new TodoService();
-        Assert.True(true);
+        var settings = new Dictionary<string, string> {
+        {"ConnectionStrings:DefaultConnection", "Data Source=todo.db"}
+    };
+
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(settings)
+            .Build();
+
+        var service = new TodoService(configuration);
+
     }
 
     [Fact]
     public void TestCreateTodo()
     {
-        var service = new TodoService();
         var todo = new Todo
         {
             Title = "Test",
@@ -35,7 +80,8 @@ public class UnitTest1
     [Fact]
     public void TestGetTodo()
     {
-        var service = new TodoService();
+        service.CreateTodo(new Todo { Title = "Test" });
+
         var todos = service.GetAllTodos();
 
         Assert.True(todos.Count > 0);
@@ -44,31 +90,34 @@ public class UnitTest1
     [Fact]
     public void UpdateTest()
     {
-        var service = new TodoService();
-        var todo = new Todo
+        var created = service.CreateTodo(new Todo { Title = "Old" });
+
+        var updated = service.UpdateTodo(created.Id, new Todo
         {
             Title = "Updated",
             Description = "Updated Description",
             IsCompleted = true
-        };
+        });
 
-        var result = service.UpdateTodo(1, todo);
-        Assert.NotNull(result);
+        Assert.NotNull(updated);
+        Assert.Equal("Updated", updated.Title);
     }
 
     [Fact]
     public void DeleteWorks()
     {
-        var service = new TodoService();
-        var result = service.DeleteTodo(999);
+        var created = service.CreateTodo(new Todo { Title = "ToDelete" });
 
-        Assert.False(result);
+        var result = service.DeleteTodo(created.Id);
+
+        Assert.True(result);
     }
 
     [Fact]
     public void ControllerTest()
     {
-        var controller = new TodoController();
+        var controller = new TodoController(service);
+
         var todo = new Todo { Title = "Test", Description = "Desc" };
 
         var result = controller.CreateTodo(todo);
@@ -79,8 +128,6 @@ public class UnitTest1
     [Fact]
     public void TestEverything()
     {
-        var service = new TodoService();
-
         var todo1 = service.CreateTodo(new Todo { Title = "1", Description = "D1" });
         var todo2 = service.CreateTodo(new Todo { Title = "2", Description = "D2" });
 

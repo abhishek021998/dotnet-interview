@@ -3,109 +3,155 @@ using TodoApi.Models;
 
 namespace TodoApi.Services
 {
-    public class TodoService
+    public class TodoService : ITodoService
     {
-        private string _connectionString = "Data Source=todos.db";
 
-        public TodoService()
+        private readonly string _connectionString;
+
+        // Injecting IConfiguration allows DI to pass settings from appsettings.json
+        public TodoService(IConfiguration configuration)
         {
+
+            _connectionString = configuration.GetConnectionString("DefaultConnection");
+         
         }
+       
 
         public Todo CreateTodo(Todo todo)
         {
-            using var connection = new SqliteConnection(_connectionString);
-            connection.Open();
+            try
+            {
+                using var connection = new SqliteConnection(_connectionString);
+                connection.Open();
 
-            var command = connection.CreateCommand();
-            command.CommandText = $@"
-                INSERT INTO Todos (Title, Description, IsCompleted, CreatedAt)
-                VALUES ('{todo.Title}', '{todo.Description}', {(todo.IsCompleted ? 1 : 0)}, '{DateTime.UtcNow.ToString("o")}');
-                SELECT last_insert_rowid();
-            ";
+                var command = connection.CreateCommand();
+                command.CommandText = $@"
+                        INSERT INTO Todos (Title, Description, IsCompleted, CreatedAt)
+                        VALUES ('{todo.Title}', '{todo.Description}', {(todo.IsCompleted ? 1 : 0)}, '{DateTime.UtcNow.ToString("o")}');
+                        SELECT last_insert_rowid();
+                    ";
 
-            var id = Convert.ToInt32(command.ExecuteScalar());
-            todo.Id = id;
-            todo.CreatedAt = DateTime.UtcNow;
-            return todo;
+                var id = Convert.ToInt32(command.ExecuteScalar());
+                todo.Id = id;
+                todo.CreatedAt = DateTime.UtcNow;
+                return todo;
+            }
+            catch (SqliteException ex)
+            {
+                // Log the exception or handle it as needed
+                throw new Exception("An error occurred while creating the Todo.", ex);
+            }
         }
 
         public List<Todo> GetAllTodos()
         {
-            var todos = new List<Todo>();
-            using var connection = new SqliteConnection(_connectionString);
-            connection.Open();
-
-            var command = connection.CreateCommand();
-            command.CommandText = "SELECT * FROM Todos";
-
-            using var reader = command.ExecuteReader();
-            while (reader.Read())
+            try
             {
-                todos.Add(new Todo
-                {
-                    Id = reader.GetInt32(0),
-                    Title = reader.GetString(1),
-                    Description = reader.GetString(2),
-                    IsCompleted = reader.GetInt32(3) == 1,
-                    CreatedAt = DateTime.Parse(reader.GetString(4))
-                });
-            }
+                var todos = new List<Todo>();
+                using var connection = new SqliteConnection(_connectionString);
+                connection.Open();
 
-            return todos;
+                var command = connection.CreateCommand();
+                command.CommandText = "SELECT * FROM Todos";
+
+                using var reader = command.ExecuteReader();
+                while (reader.Read())
+                {
+                    todos.Add(new Todo
+                    {
+                        Id = reader.GetInt32(0),
+                        Title = reader.GetString(1),
+                        Description = reader.GetString(2),
+                        IsCompleted = reader.GetInt32(3) == 1,
+                        CreatedAt = DateTime.Parse(reader.GetString(4))
+                    });
+                }
+
+                return todos;
+            }
+            catch (SqliteException ex)
+            {
+                // Log the exception or handle it as needed
+                throw new Exception("An error occurred while retrieving all Todos.", ex);
+            }
         }
 
         public Todo GetTodoById(int id)
         {
-            using var connection = new SqliteConnection(_connectionString);
-            connection.Open();
-
-            var command = connection.CreateCommand();
-            command.CommandText = $"SELECT * FROM Todos WHERE Id = {id}";
-
-            using var reader = command.ExecuteReader();
-            if (reader.Read())
+            try
             {
-                return new Todo
-                {
-                    Id = reader.GetInt32(0),
-                    Title = reader.GetString(1),
-                    Description = reader.GetString(2),
-                    IsCompleted = reader.GetInt32(3) == 1,
-                    CreatedAt = DateTime.Parse(reader.GetString(4))
-                };
-            }
+                using var connection = new SqliteConnection(_connectionString);
+                connection.Open();
 
-            return null;
+                var command = connection.CreateCommand();
+                command.CommandText = $"SELECT * FROM Todos WHERE Id = {id}";
+
+                using var reader = command.ExecuteReader();
+                if (reader.Read())
+                {
+                    return new Todo
+                    {
+                        Id = reader.GetInt32(0),
+                        Title = reader.GetString(1),
+                        Description = reader.GetString(2),
+                        IsCompleted = reader.GetInt32(3) == 1,
+                        CreatedAt = DateTime.Parse(reader.GetString(4))
+                    };
+                }
+
+                return null;
+            }
+            catch (SqliteException ex)
+            {
+                // Log the exception or handle it as needed
+                throw new Exception($"An error occurred while retrieving the Todo with Id {id}.", ex);
+            }
         }
 
         public Todo UpdateTodo(int id, Todo todo)
         {
-            using var connection = new SqliteConnection(_connectionString);
-            connection.Open();
+            try
+            {
+                using var connection = new SqliteConnection(_connectionString);
+                connection.Open();
 
-            var command = connection.CreateCommand();
-            command.CommandText = $@"
-                UPDATE Todos
-                SET Title = '{todo.Title}', Description = '{todo.Description}', IsCompleted = {(todo.IsCompleted ? 1 : 0)}
-                WHERE Id = {id}
-            ";
+                var command = connection.CreateCommand();
+                command.CommandText = $@"
+                        UPDATE Todos
+                        SET Title = '{todo.Title}', Description = '{todo.Description}', IsCompleted = {(todo.IsCompleted ? 1 : 0)}
+                        WHERE Id = {id}
+                    ";
 
-            var rowsAffected = command.ExecuteNonQuery();
+                var rowsAffected = command.ExecuteNonQuery();
 
-            todo.Id = id;
-            return todo;
+                todo.Id = id;
+                return todo;
+            }
+            catch (SqliteException ex)
+            {
+                // Log the exception or handle it as needed
+                throw new Exception($"An error occurred while updating the Todo with Id {id}.", ex);
+            }
         }
 
         public bool DeleteTodo(int id)
         {
-            using var connection = new SqliteConnection(_connectionString);
-            connection.Open();
+            try
+            {
+                using var connection = new SqliteConnection(_connectionString);
+                connection.Open();
 
-            var command = connection.CreateCommand();
-            command.CommandText = $"DELETE FROM Todos WHERE Id = {id}";
+                var command = connection.CreateCommand();
+                command.CommandText = $"DELETE FROM Todos WHERE Id = {id}";
 
-            var rowsAffected = command.ExecuteNonQuery();
-            return rowsAffected > 0;
+                var rowsAffected = command.ExecuteNonQuery();
+                return rowsAffected > 0;
+            }
+            catch (SqliteException ex)
+            {
+                // Log the exception or handle it as needed
+                throw new Exception($"An error occurred while deleting the Todo with Id {id}.", ex);
+            }
         }
     }
 }
